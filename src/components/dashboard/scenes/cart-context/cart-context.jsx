@@ -1,32 +1,37 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
-  const [cartCount, setCartCount] = useState(() => {
-    var storedProductId = localStorage.getItem('productId');
-    var storedData = storedProductId ? JSON.parse(storedProductId) : [];
-    return storedData.length;
-  });
+  // Load product array from local storage
+  const storedProduct = localStorage.getItem('product');
+  const products = storedProduct ? JSON.parse(storedProduct) : [];
+
+  // Calculate the total count of all products
+  const totalCount = products.reduce((total, item) => total + (typeof item.count === 'number' ? item.count : 0), 0);
+
+  const [cartItems, setCartItems] = useState(products);
+  const [cartCount, setCartCount] = useState(totalCount);
+  
 
   const addToCart = () => {
     setCartCount((prevCount) => prevCount + 1);
   };
-  const [cartItems, setCartItems] = useState([]);
-
-
-  
 
   const removeFromCart = (productId) => {
     const updatedCartItems = cartItems.filter(item => item.productId !== productId);
     setCartItems(updatedCartItems);
-    setCartCount(cartCount - 1);
+    setCartCount((prevCount) => prevCount - 1);
   };
 
   const clearCart = () => {
     setCartItems([]);
     setCartCount(0);
   };
+
+  useEffect(() => {
+    localStorage.setItem('productId', JSON.stringify(cartItems));
+  }, [cartItems]);
 
   return (
     <CartContext.Provider value={{ cartCount, cartItems, addToCart, removeFromCart, clearCart }}>

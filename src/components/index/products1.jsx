@@ -4,7 +4,7 @@ import { useCart } from '../dashboard/scenes/cart-context/cart-context';
 import { LocalSeeRounded } from '@mui/icons-material';
 
 const Products1 = () => {
-  const { addToCart, cartCount } = useCart();
+  const { addToCart } = useCart();
   const [products, setProducts] = useState([]);
   const [thisCart, setThisCart] = useState({}); // Use an object to track counts for each product
 
@@ -22,37 +22,59 @@ const Products1 = () => {
   }, []);
 
   useEffect(() => {
-    // When the component mounts, retrieve saved counts from localStorage
-    var storedProductId = localStorage.getItem('productCounts');
-    var savedCounts = storedProductId ? JSON.parse(storedProductId) : [];
-    if (savedCounts) {
-      setThisCart(savedCounts);
-    }
+    // When the component mounts, retrieve saved product array from localStorage
+    var storedProduct = localStorage.getItem('product');
+    var products = storedProduct ? JSON.parse(storedProduct) : [];
+  
+    // Extract counts for each product
+    const counts = products.reduce((countObj, item) => {
+      countObj[item.id] = item.count;
+      return countObj;
+    }, {});
+  
+    // Update the state with the counts
+    setThisCart(counts);
   }, []);
   
+  
+  
   const handleAddToCart = (id, name, image, price) => {
-    var storedProductId = localStorage.getItem('productId');
-    var items = storedProductId ? JSON.parse(storedProductId) : [];
-
-    items.push({ id, name, image, price });
-
-    localStorage.setItem('productId', JSON.stringify(items));
+    // Retrieve existing items from localStorage
+    const storedProducts = localStorage.getItem('product');
+    const product = storedProducts ? JSON.parse(storedProducts) : [];
+  
+    // Check if the product with the given id already exists in the cart
+    const existingProductIndex = product.findIndex((item) => item.id === id);
+  
+    if (existingProductIndex !== -1) {
+      // If the product exists, increment the count
+      product[existingProductIndex].count = (product[existingProductIndex].count || 0) + 1;
+    } else {
+      // If the product doesn't exist, add it to the cart with count 1
+      const newItem = { id, name, image, price, count: 1 };
+      product.push(newItem);
+    }
+  
+    // Update localStorage with the new cart data
+    localStorage.setItem('product', JSON.stringify(product));
+  
+    // Update localStorage with the new counts and subtotals
+    const productCounts = product.reduce((countObj, item) => {
+      countObj[item.id] = item.count;
+      return countObj;
+    }, {});
+  
+    // Update the count for the specific product
+    setThisCart(productCounts);
 
     addToCart();
-
-    // Update the count for the specific product
-    setThisCart((currentCount) => {
-      const newCount = { ...currentCount, [id]: (currentCount[id] || 0) + 1 };
-
-      // Update localStorage with the new counts
-      localStorage.setItem('productCounts', JSON.stringify(newCount));
-
-      return newCount;
-    });
-
-    console.log(items);
+  
+    console.log(product);
     alert('Product added to cart');
   };
+  
+  
+  
 
   return (
     <div className="container-fluid pt-5 pb-3">

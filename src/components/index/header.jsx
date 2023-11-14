@@ -4,7 +4,7 @@ import { useCart } from '../dashboard/scenes/cart-context/cart-context';
 import {Link, NavLink} from 'react-router-dom';
 
 const Header = (props) => {
-    const { cartCount } = useCart();
+    const {cartCount, addToCart} = useCart();
     const [categories, setCategories] = useState([]);
 
     
@@ -23,10 +23,18 @@ const Header = (props) => {
     }, []);
 
     useEffect(() => {
-        // Load cart count from local storage
-        const savedCartCount = localStorage.getItem('cartCount');
-        // setCartNo(Number(savedCartCount));
-    }, []);
+    // Load product array from local storage
+    const storedProduct = localStorage.getItem('product');
+    const products = storedProduct ? JSON.parse(storedProduct) : [];
+  
+    // Calculate the total count of all products
+    const totalCount = products.reduce((total, item) => total + (typeof item.count === 'number' ? item.count : 0), 0);
+  
+    // Update the cartNo state with the total count
+    // setCartCount(totalCount);
+}, []);
+
+      
     
     return (
         <div>

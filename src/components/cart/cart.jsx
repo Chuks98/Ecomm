@@ -1,105 +1,74 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
+import { useCart } from '../dashboard/scenes/cart-context/cart-context';
 import Header from '../index/header';
 import Footer from '../index/footer';
 
 function Cart() {
-  var count = localStorage.getItem('counter');
-  const initialValue = count ? parseInt(count) : 0;
-  const [counter, setCounter] = useState(initialValue);
+  const { addToCart } = useCart();
+  var cart = localStorage.getItem('updatedCart');
   const [products, setProducts] = useState([]);
   const [totalPrice, setTotalPrice] = useState([]);
 
   useEffect(() => {
-    localStorage.setItem('counter', counter.toString());
-    var storedProductId = localStorage.getItem('productId');
-    var jsonData = storedProductId ? JSON.parse(storedProductId) : [];
-    var productCounts = {};
-    console.log('Error', jsonData)
+    const storedProducts = localStorage.getItem('product');
+    const products = storedProducts ? JSON.parse(storedProducts) : [];
+    setProducts(products);
 
-    if(jsonData.length > 0) {
-      // Iterate through jsonData to count occurrences of each product
-      jsonData.forEach(product => {
-        const key = product.id; // Use a unique identifier, e.g., product ID
-        if (productCounts[key]) {
-            // This product has been encountered before
-            productCounts[key].count++;
-        } else {
-            // This is a new product
-            productCounts[key] = {
-            product: product,
-            count: 1,
-            };
-        }
-      });
-    
-        // Separate unique and duplicate products
-        const uniqueProducts = [];
-        const duplicateProducts = [];
-    
-        for (const key in productCounts) {
-            if (productCounts[key].count === 1) {
-                // Unique product
-                uniqueProducts.push({...productCounts[key].product, count: 1});
-            } else {
-                // Duplicate product
-                duplicateProducts.push({
-                ...productCounts[key].product, // Copy the product details
-                count: productCounts[key].count, // Increase the count
-                });
-            }
-        }
-    
-        // Now, you have uniqueProducts containing unique products and duplicateProducts
-        // containing one entry for each duplicate product with an increased count.
-    
-        // If you want to update the state with the unique and duplicate products separately, you can do so:
-        setProducts([...uniqueProducts, ...duplicateProducts]);
-        console.log(products);
-    
-    
-    
-    
-        // Get the sub total
-        var totalPrice = 0;
-    
-        for (const product of jsonData) {
-            totalPrice += product.price;
-        }
-    
-        setTotalPrice(totalPrice);
+    if(products.length > 0) {
+      // Get the sub total
+      var totalPrice = 0;
+  
+      for (const product of products) {
+          totalPrice += (product.price * product.count);
+      }
+      setTotalPrice(totalPrice);
     }
     
-  }, [counter]);
-
+  }, []);
   
 
-  const handleIncrement = (cartItemId) => {
+  const handleIncrement = (id) => {
     setProducts((prevProducts) => {
-      const updatedProducts = prevProducts.map((cartItem) => {
-        if (cartItem.id === cartItemId) {
-          // Increment the count for the matching cartItem
-          return { ...cartItem, count: cartItem.count + 1 };
+      const updatedProducts = prevProducts.map((product) => {
+        if (product.id === id) {
+          // If the product exists, increment the count
+          return { ...product, count: (product.count || 0) + 1 };
         }
-        return cartItem;
+        return product;
       });
   
-      // Update the localStorage with the new cart data
-      localStorage.setItem('productId', JSON.stringify(updatedProducts));
+      // Update localStorage with the new cart data
+      localStorage.setItem('product', JSON.stringify(updatedProducts));
+      console.log(updatedProducts);
   
-      return updatedProducts;
+      // Calculate and set total price based on updated cart data
+      const totalPrice = updatedProducts.reduce((acc, product) => {
+        return acc + product.price * product.count;
+      }, 0);
+      setTotalPrice(totalPrice);
+
+      addToCart();
+  
+      return updatedProducts; // Return a new array reference to trigger a re-render
     });
-  };  
+  };
+  
+   
   
   const handleDecrement = (cartItemId) => {
     setProducts((prevProducts) => {
-      return prevProducts.map((cartItem) => {
+      const updatedProducts = prevProducts.map((cartItem) => {
         if (cartItem.id === cartItemId && cartItem.count > 1) {
           // Decrement the count for the matching cartItem, but ensure it's not less than 1
           return { ...cartItem, count: cartItem.count - 1 };
         }
         return cartItem;
       });
+
+      // Update the cart and total price
+
+      return updatedProducts;
     });
   };
   
@@ -116,7 +85,7 @@ function Cart() {
           <div className="col-12">
             <nav className="breadcrumb bg-light mb-30">
               <NavLink to="/" className="breadcrumb-item text-dark">Home</NavLink>
-              <span className="breadcrumb-item active">Contact</span>
+              <span className="breadcrumb-item active">Cart</span>
             </nav>
           </div>
         </div>
@@ -141,8 +110,8 @@ function Cart() {
                 {products.map(cartItem => {
                   return (
                     <tr key={cartItem.id}>
-                      <td style={{display: 'flex', justifyContent: 'flex-start'}} className="align-middle">
-                        <img src={process.env.PUBLIC_URL + '/img/product-images/' + cartItem.image} alt="" style={{ width: '50px' }} /> &nbsp;&nbsp;{cartItem.name}
+                      <td style={{display: 'flex', justifyContent: 'flex-start', alignItems: 'center'}} className="align-middle">
+                        <img src={process.env.PUBLIC_URL + '/img/product-images/' + cartItem.image} alt="" style={{ width: '80px', height: '80px' }} /> &nbsp;&nbsp;{cartItem.name}
                       </td>
                       <td className="align-middle">${cartItem.price}</td>
                       <td className="align-middle">
@@ -165,7 +134,7 @@ function Cart() {
                           </div>
                         </div>
                       </td>
-                      <td className="align-middle">${(cartItem.price) * (cartItem.count)}</td>
+                      <td className="align-middle">${(cartItem.price * cartItem.count)}</td>
                       <td className="align-middle">
                         <button className="btn btn-sm btn-danger"><i className="fa fa-times"></i></button>
                       </td>
