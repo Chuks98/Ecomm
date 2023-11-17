@@ -5,8 +5,8 @@ import Header from '../index/header';
 import Footer from '../index/footer';
 
 function Cart() {
-  const { addToCart } = useCart();
-  var cart = localStorage.getItem('updatedCart');
+  const [shippingFee] = useState(10);
+  const { addToCart, removeFromCart } = useCart();
   const [products, setProducts] = useState([]);
   const [totalPrice, setTotalPrice] = useState([]);
 
@@ -29,6 +29,7 @@ function Cart() {
   
 
   const handleIncrement = (id) => {
+    addToCart();
     setProducts((prevProducts) => {
       const updatedProducts = prevProducts.map((product) => {
         if (product.id === id) {
@@ -47,8 +48,6 @@ function Cart() {
         return acc + product.price * product.count;
       }, 0);
       setTotalPrice(totalPrice);
-
-      addToCart();
   
       return updatedProducts; // Return a new array reference to trigger a re-render
     });
@@ -56,21 +55,31 @@ function Cart() {
   
    
   
-  const handleDecrement = (cartItemId) => {
+  const handleDecrement = (id) => {
+    removeFromCart();
     setProducts((prevProducts) => {
-      const updatedProducts = prevProducts.map((cartItem) => {
-        if (cartItem.id === cartItemId && cartItem.count > 1) {
-          // Decrement the count for the matching cartItem, but ensure it's not less than 1
-          return { ...cartItem, count: cartItem.count - 1 };
-        }
-        return cartItem;
-      });
+        const updatedProducts = prevProducts.map((product) => {
+            if (product.id === id) {
+                // If the product exists and count is greater than 0, decrement the count
+                return { ...product, count: Math.max((product.count || 0) - 1, 0) };
+            }
+            return product;
+        });
 
-      // Update the cart and total price
+        // Update localStorage with the new cart data
+        localStorage.setItem('product', JSON.stringify(updatedProducts));
+        console.log(updatedProducts);
 
-      return updatedProducts;
+        // Calculate and set total price based on updated cart data
+        const totalPrice = updatedProducts.reduce((acc, product) => {
+            return acc + product.price * product.count;
+        }, 0);
+        setTotalPrice(totalPrice);
+
+        return updatedProducts; // Return a new array reference to trigger a re-render
     });
-  };
+};
+
   
 
   return (
@@ -162,16 +171,16 @@ function Cart() {
                             <h6>${totalPrice}</h6>
                         </div>
                         <div className="d-flex justify-content-between">
-                            <h6 className="font-weight-medium">Shipping</h6>
-                            <h6 className="font-weight-medium">$10</h6>
+                            <h6 className="font-weight-medium">Shipping Fee</h6>
+                            <h6 className="font-weight-medium">${shippingFee}</h6>
                         </div>
                     </div>
                     <div className="pt-2">
                         <div className="d-flex justify-content-between mt-2">
                             <h5>Total</h5>
-                            <h5>${totalPrice + 10}</h5>
+                            <h5>${totalPrice + shippingFee}</h5>
                         </div>
-                        <button className="btn btn-block btn-primary font-weight-bold my-3 py-3">Proceed To Checkout</button>
+                        <NavLink to='/checkout'><button className="btn btn-block btn-primary font-weight-bold my-3 py-3">Proceed To Checkout</button></NavLink>
                     </div>
                 </div>
             </div>

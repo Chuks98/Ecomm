@@ -12,17 +12,21 @@ export const CartProvider = ({ children }) => {
 
   const [cartItems, setCartItems] = useState(products);
   const [cartCount, setCartCount] = useState(totalCount);
-  
+
 
   const addToCart = () => {
     setCartCount((prevCount) => prevCount + 1);
   };
-
-  const removeFromCart = (productId) => {
-    const updatedCartItems = cartItems.filter(item => item.productId !== productId);
-    setCartItems(updatedCartItems);
+  
+  const removeFromCart = () => {
     setCartCount((prevCount) => prevCount - 1);
   };
+
+  // const removeFromCart = (productId) => {
+  //   const updatedCartItems = cartItems.filter(item => item.productId !== productId);
+  //   setCartItems(updatedCartItems);
+  //   setCartCount((prevCount) => prevCount - 1);
+  // };
 
   const clearCart = () => {
     setCartItems([]);

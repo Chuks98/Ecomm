@@ -1,9 +1,43 @@
-import React from 'react';
+import React, {useState} from 'react';
 import { NavLink } from 'react-router-dom';
+import Flutterwave from 'flutterwave';
 import Header from '../index/header';
 import Footer from '../index/footer';
 
 function Chekout() {
+    const [shippingFee] = useState(10);
+    const products = localStorage.getItem('product');
+    const cartProducts = products ? JSON.parse(products) : [];
+
+    const [product] = useState(cartProducts);
+
+    const calcTotalPrice = product.reduce((total, cartItem) => {
+        return total + cartItem.price * cartItem.count;
+    }, 0);
+
+    const [totalPrice] = useState(calcTotalPrice);
+
+    const handleFlutterwave = () => {
+        const flutterwaveConfig = {
+            public_key: 'FLWPUBK_TEST-5e33eb6807f77c35301e4b175b23f9d9-X',
+            tx_ref: Date.now(),
+            amount: totalPrice + shippingFee,
+            currency: 'USD',
+            payment_options: 'card',
+            redirect_url: '/success',
+            meta: {
+              consumer_id: 23,
+              consumer_mac: '92a3-912ba-1192a',
+            },
+            customizations: {
+              title: 'Your Store',
+              description: 'Payment for items in your cart',
+              logo: 'https://your-store-logo.png',
+            },
+        };  
+    };
+
+
     return(
         <div>
              {/* Header Starts */}
@@ -16,7 +50,7 @@ function Chekout() {
                     <div className="col-12">
                         <nav className="breadcrumb bg-light mb-30">
                             <NavLink to="/" className="breadcrumb-item text-dark">Home</NavLink>
-                            <span className="breadcrumb-item active">Contact</span>
+                            <span className="breadcrumb-item active">Checkout</span>
                         </nav>
                     </div>
                 </div>
@@ -77,7 +111,7 @@ function Chekout() {
                                     <label>ZIP Code</label>
                                     <input className="form-control" type="text" placeholder="123" />
                                 </div>
-                                <div className="col-md-12 form-group">
+                                {/* <div className="col-md-12 form-group">
                                     <div className="custom-control custom-checkbox">
                                         <input type="checkbox" className="custom-control-input" id="newaccount" />
                                         <label className="custom-control-label" htmlFor="newaccount">Create an account</label>
@@ -88,7 +122,7 @@ function Chekout() {
                                         <input type="checkbox" className="custom-control-input" id="shipto" data-toggle="collapse" data-target="#shipping-address" />
                                         <label className="custom-control-label" htmlFor="shipto">Ship to different address</label>
                                     </div>
-                                </div>
+                                </div> */}
                             </div>
                         </div>
                         <div className="collapse mb-5" id="shipping-address">
@@ -149,33 +183,27 @@ function Chekout() {
                         <div className="bg-light p-30 mb-5">
                             <div className="border-bottom">
                                 <h6 className="mb-3">Products</h6>
-                                <div className="d-flex justify-content-between">
-                                    <p>Product Name 1</p>
-                                    <p>$150</p>
-                                </div>
-                                <div className="d-flex justify-content-between">
-                                    <p>Product Name 2</p>
-                                    <p>$150</p>
-                                </div>
-                                <div className="d-flex justify-content-between">
-                                    <p>Product Name 3</p>
-                                    <p>$150</p>
-                                </div>
+                                {product.map(cartItem => (
+                                    <div className="d-flex justify-content-between">
+                                        <p>{cartItem.name} ({cartItem.count})</p>
+                                        <p>${cartItem.price * cartItem.count}</p>
+                                    </div>
+                                ))}
                             </div>
                             <div className="border-bottom pt-3 pb-2">
                                 <div className="d-flex justify-content-between mb-3">
                                     <h6>Subtotal</h6>
-                                    <h6>$150</h6>
+                                    <h6>${totalPrice}</h6>
                                 </div>
                                 <div className="d-flex justify-content-between">
-                                    <h6 className="font-weight-medium">Shipping</h6>
-                                    <h6 className="font-weight-medium">$10</h6>
+                                    <h6 className="font-weight-medium">Shipping Fee</h6>
+                                    <h6 className="font-weight-medium">${shippingFee}</h6>
                                 </div>
                             </div>
                             <div className="pt-2">
                                 <div className="d-flex justify-content-between mt-2">
                                     <h5>Total</h5>
-                                    <h5>$160</h5>
+                                    <h5>${totalPrice + shippingFee}</h5>
                                 </div>
                             </div>
                         </div>
@@ -184,11 +212,11 @@ function Chekout() {
                             <div className="bg-light p-30">
                                 <div className="form-group">
                                     <div className="custom-control custom-radio">
-                                        <input type="radio" className="custom-control-input" name="payment" id="paypal" />
-                                        <label className="custom-control-label" htmlFor="paypal">Paypal</label>
+                                        <input type="radio" className="custom-control-input" name="payment" id="paypal" checked/>
+                                        <label className="custom-control-label" htmlFor="paypal">Flutterwave</label>
                                     </div>
                                 </div>
-                                <div className="form-group">
+                                {/* <div className="form-group">
                                     <div className="custom-control custom-radio">
                                         <input type="radio" className="custom-control-input" name="payment" id="directcheck" />
                                         <label className="custom-control-label" htmlFor="directcheck">Direct Check</label>
@@ -199,8 +227,8 @@ function Chekout() {
                                         <input type="radio" className="custom-control-input" name="payment" id="banktransfer" />
                                         <label className="custom-control-label" htmlFor="banktransfer">Bank Transfer</label>
                                     </div>
-                                </div>
-                                <button className="btn btn-block btn-primary font-weight-bold py-3">Place Order</button>
+                                </div> */}
+                                <button className="btn btn-block btn-primary font-weight-bold py-3" onClick={() => {handleFlutterwave()}}>Place Order</button>
                             </div>
                         </div>
                     </div>
